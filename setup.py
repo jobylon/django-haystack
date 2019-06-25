@@ -10,7 +10,7 @@ except ImportError:
 
 setup(
     name='django-haystack',
-    version='2.1.1-dev',
+    version='2.1.1-dev-v2',
     description='Pluggable search for Django.',
     author='Daniel Lindsley',
     author_email='daniel@toastdriven.com',
