@@ -944,6 +944,9 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
         if self.within:
             search_kwargs['within'] = self.within
 
+        if self._source_exclude:
+            search_kwargs['_source_exclude'] = self._source_exclude
+
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
         elif self.spelling_query:
