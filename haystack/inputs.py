@@ -91,6 +91,25 @@ class Not(Clean):
         return query_obj.build_not_query(query_string)
 
 
+class Wildcard(BaseInput):
+    """
+    An input type for wildcard search input.
+    """
+    input_type_name = 'wildcard'
+    word_with_asterisk_re = re.compile('\w+\*$')
+
+    def prepare(self, query_obj):
+        query_string = super(Wildcard, self).prepare(query_obj)
+
+        cleaned_query_string = query_obj.clean(query_string)
+        if self.word_with_asterisk_re.match(query_string) \
+                and cleaned_query_string.endswith('\\*'):
+            # Asterisk will be enclosed as '\\*' after cleaning 
+            # so let's replace it back to '*'
+            cleaned_query_string = '{}*'.format(cleaned_query_string[:-len('\\*')])
+        return cleaned_query_string
+
+
 class AutoQuery(BaseInput):
     """
     A convenience class that handles common user queries.
@@ -127,6 +146,10 @@ class AutoQuery(BaseInput):
             elif token.startswith("-") and len(token) > 1:
                 # This might break Xapian. Check on this.
                 query_bits.append(Not(token[1:]).prepare(query_obj))
+            elif token.endswith('*'):
+                # Allows searching using a wildcard such as: Wil* for
+                # William and Wiluria
+                query_bits.append(Wildcard(token).prepare(query_obj))
             else:
                 query_bits.append(Clean(token).prepare(query_obj))
 

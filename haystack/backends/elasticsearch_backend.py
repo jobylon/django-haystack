@@ -566,6 +566,12 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
         if not self.setup_complete:
             self.setup()
 
+        # Exclude fields from search
+        # Will be joined and escaped in the elasticsearch client
+        # elasticsearch.client.Elasticsearch.search @query_params
+        # Could be improved by being handled by `build_search_kwargs`
+        _source_exclude = kwargs.pop('_source_exclude', [])
+
         search_kwargs = self.build_search_kwargs(query_string, **kwargs)
         search_kwargs["from"] = kwargs.get("start_offset", 0)
 
@@ -586,6 +592,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 body=search_kwargs,
                 index=self.index_name,
                 _source=True,
+                _source_exclude=_source_exclude,
                 **self._get_doc_type_option(),
             )
         except elasticsearch.TransportError as e:
@@ -910,6 +917,10 @@ FIELD_MAPPINGS = {
 # Sucks that this is almost an exact copy of what's in the Solr backend,
 # but we can't import due to dependencies.
 class ElasticsearchSearchQuery(BaseSearchQuery):
+    def __init__(self, *args, **kwargs):
+        self._source_exclude = [] # Set default
+        super(ElasticsearchSearchQuery, self).__init__(*args, **kwargs)
+
     def matching_all_fragment(self):
         return "*:*"
 
@@ -1090,6 +1101,9 @@ class ElasticsearchSearchQuery(BaseSearchQuery):
 
         if self.within:
             search_kwargs["within"] = self.within
+
+        if self._source_exclude:
+            search_kwargs['_source_exclude'] = self._source_exclude
 
         if spelling_query:
             search_kwargs["spelling_query"] = spelling_query
