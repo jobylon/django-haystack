@@ -592,7 +592,7 @@ class ElasticsearchSearchBackend(BaseSearchBackend):
                 body=search_kwargs,
                 index=self.index_name,
                 _source=True,
-                _source_exclude=_source_exclude,
+                _source_excludes=_source_exclude,
                 **self._get_doc_type_option(),
             )
         except elasticsearch.TransportError as e:
